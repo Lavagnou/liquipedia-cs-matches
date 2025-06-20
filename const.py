@@ -1,0 +1,6 @@
+DOMAIN = "liquipedia_cs_matches"
+ATTR_MATCH = "match"
+ATTR_FORMAT = "format"
+ATTR_DATE = "date"
+ATTR_EVENT = "event"
+ATTR_SCORE = "score"
