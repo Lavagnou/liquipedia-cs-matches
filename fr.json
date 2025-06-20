@@ -1,0 +1,15 @@
+{
+  "sensor": {
+    "name": "Matchs Counter-Strike (Liquipedia)"
+  },
+  "button": {
+    "name": "Mettre à jour toutes les équipes"
+  },
+  "state": {
+    "match": "Match",
+    "format": "Format",
+    "date": "Date",
+    "event": "Tournoi",
+    "score": "Score"
+  }
+}
