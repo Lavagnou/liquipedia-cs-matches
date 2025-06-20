@@ -48,22 +48,31 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     # Récupérer les équipes configurées
     teams_config = config.get(CONF_TEAMS, [])
     entities = []
-    
     for team_config in teams_config:
-        team_page = team_config[CONF_PAGE]
-        team_name = team_config[CONF_NAME]
+        name = team_config.get(CONF_NAME)
+        page = team_config.get(CONF_PAGE)
         
         # Créer les capteurs pour chaque équipe (prochain match et dernier match)
-        entities.append(LiquipediaCsMatchSensor(hass, team_page, team_name, "next"))
-        entities.append(LiquipediaCsMatchSensor(hass, team_page, team_name, "last"))
+        next_match_sensor = LiquipediaCsMatchSensor(hass, page, name, "next")
+        last_match_sensor = LiquipediaCsMatchSensor(hass, page, name, "last")
+        entities.append(next_match_sensor)
+        entities.append(last_match_sensor)
+        
+        # Ajouter l'entité à la liste globale pour le bouton de mise à jour
+        if DOMAIN not in hass.data:
+            hass.data[DOMAIN] = {}
+        if "entities" not in hass.data[DOMAIN]:
+            hass.data[DOMAIN]["entities"] = []
+            
+        hass.data[DOMAIN]["entities"].append(next_match_sensor)
+        hass.data[DOMAIN]["entities"].append(last_match_sensor)
     
-    # Enregistrer les entités pour le bouton de mise à jour
-    if DOMAIN not in hass.data:
-        hass.data[DOMAIN] = {}
-    hass.data[DOMAIN]["entities"] = entities
-    
-    add_entities(entities, True)
-    _LOGGER.info(f"Set up {len(entities)} Liquipedia CS Match sensors")
+    # Ajouter toutes les entités à Home Assistant
+    if entities:
+        add_entities(entities, True)
+        _LOGGER.info(f"Ajout de {len(entities)} capteur(s) Liquipedia CS")
+    else:
+        _LOGGER.warning("Aucune équipe configurée pour Liquipedia CS")
 
 def fetch_team_data(hass, team_page, team_name):
     """Récupère les données pour une équipe depuis Liquipedia."""
@@ -72,18 +81,27 @@ def fetch_team_data(hass, team_page, team_name):
     # Vérifier le cache
     if team_page in _TEAM_DATA_CACHE and team_page in _LAST_FETCH:
         if now - _LAST_FETCH[team_page] < SCAN_INTERVAL:
+            _LOGGER.debug(f"Utilisation des données en cache pour {team_name}")
             return _TEAM_DATA_CACHE[team_page]
+    
+    _LOGGER.info(f"Récupération des données pour {team_name} depuis Liquipedia")
     
     # Initialiser les données
     data = {"next": {}, "last": {}}
     
-    try:
-        # Récupérer la page de l'équipe
+    try:        # Récupérer la page de l'équipe
         team_url = f"https://liquipedia.net/counterstrike/{team_page}/Matches"
-        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0) HomeAssistant"}
+        headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; HomeAssistant/2023.2)"}
         
-        response = requests.get(team_url, headers=headers, timeout=10)
-        response.raise_for_status()
+        try:
+            response = requests.get(team_url, headers=headers, timeout=10)
+            response.raise_for_status()
+            _LOGGER.debug(f"Page équipe récupérée avec succès: {team_url}")
+        except requests.exceptions.RequestException as e:
+            _LOGGER.error(f"Erreur lors de la récupération de la page équipe {team_url}: {e}")
+            if team_page in _TEAM_DATA_CACHE:
+                return _TEAM_DATA_CACHE[team_page]
+            return data
         
         # Analyser avec BeautifulSoup
         soup = BeautifulSoup(response.text, "html.parser")
@@ -139,10 +157,14 @@ def fetch_team_data(hass, team_page, team_name):
         
         # Récupérer le prochain match
         central_url = "https://liquipedia.net/counterstrike/Liquipedia:Matches"
-        central_response = requests.get(central_url, headers=headers, timeout=10)
-        central_response.raise_for_status()
-        
-        central_soup = BeautifulSoup(central_response.text, "html.parser")
+        central_soup = None
+        try:
+            central_response = requests.get(central_url, headers=headers, timeout=10)
+            central_response.raise_for_status()
+            central_soup = BeautifulSoup(central_response.text, "html.parser")
+            _LOGGER.debug(f"Page centrale des matchs récupérée avec succès")
+        except requests.exceptions.RequestException as e:
+            _LOGGER.error(f"Erreur lors de la récupération de la page centrale {central_url}: {e}")
         
         # Chercher l'équipe dans la liste des matchs à venir
         team_link = None
@@ -150,7 +172,7 @@ def fetch_team_data(hass, team_page, team_name):
             if a.get("href") == f"/counterstrike/{team_page}":
                 team_link = a
                 break
-        
+    
         if team_link:
             # Trouver la ligne du match
             match_row = team_link.find_parent("tr")
