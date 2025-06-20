@@ -1,4 +1,4 @@
-"""Bouton Home Assistant pour mettre à jour toutes les équipes."""
+"""Button component for Liquipedia CS Matches."""
 import logging
 
 from homeassistant.components.button import ButtonEntity
@@ -7,34 +7,27 @@ from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
-def setup_platform(hass, config, add_entities, discovery_info=None):
-    """Configurer le bouton Liquipedia CS."""
-    add_entities([LiquipediaCsUpdateButton(hass)], True)
-    _LOGGER.info("Liquipedia CS update button configured")
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+    """Set up the Liquipedia CS button platform."""
+    # Add the refresh button
+    async_add_entities([LiquipediaCSRefreshButton(hass)], True)
+    _LOGGER.info("Liquipedia CS refresh button configured")
 
-class LiquipediaCsUpdateButton(ButtonEntity):
-    """Bouton pour mettre à jour tous les capteurs Liquipedia CS."""
+class LiquipediaCSRefreshButton(ButtonEntity):
+    """Button to refresh Liquipedia CS matches data."""
+    
     def __init__(self, hass):
-        """Initialiser le bouton."""
+        """Initialize the button."""
         self.hass = hass
-        self._attr_name = "Liquipedia CS Update All"
-        self._attr_unique_id = "liquipedia_cs_update_button"
+        self._attr_name = "Refresh Liquipedia CS Matches"
+        self._attr_unique_id = "liquipedia_cs_refresh_button"
         self._attr_icon = "mdi:refresh"
     
-    def press(self):
-        """Gérer l'appui sur le bouton."""
-        _LOGGER.info("Liquipedia CS update button pressed")
+    async def async_press(self):
+        """Handle button press."""
+        _LOGGER.info("Liquipedia CS refresh button pressed - updating all sensors")
         
-        # Récupérer toutes les entités
-        if DOMAIN in self.hass.data and "entities" in self.hass.data[DOMAIN]:
-            entities = self.hass.data[DOMAIN]["entities"]
-            
-            # Mettre à jour chaque entité
-            for entity in entities:
-                try:
-                    entity.update()
-                    _LOGGER.debug(f"Updated {entity.name}")
-                except Exception as err:
-                    _LOGGER.error(f"Error updating {entity.name}: {err}")
-        else:
-            _LOGGER.warning("No entities found to update")
+        # Call the update service
+        await self.hass.services.async_call(
+            DOMAIN, "update_matches", {}
+        )

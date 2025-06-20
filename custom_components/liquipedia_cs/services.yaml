@@ -1,0 +1,3 @@
+update_matches:
+  name: Update Matches
+  description: "Force update all Liquipedia CS match sensors."

@@ -1,13 +1,25 @@
 # Exemple de configuration pour Liquipedia CS
 # À ajouter à votre fichier configuration.yaml
 
-liquipedia_cs:
-  teams:
-    - name: "Vitality"
-      page: "Team_Vitality"
-    - name: "NAVI"
-      page: "NAVI"
-    - name: "G2"
-      page: "G2_Esports"
-    - name: "ENCE"
-      page: "ENCE"
+# Capteurs pour les équipes
+sensor:
+  - platform: liquipedia_cs
+    teams:
+      - name: "Vitality"
+        page: "Team_Vitality"
+      - name: "NAVI"
+        page: "Natus_Vincere"
+      - name: "G2"
+        page: "G2_Esports"
+      - name: "ENCE"
+        page: "ENCE"
+
+# Bouton de rafraîchissement (optionnel)
+button:
+  - platform: liquipedia_cs
+
+# Activer le mode debug (optionnel)
+logger:
+  default: info
+  logs:
+    custom_components.liquipedia_cs: debug
