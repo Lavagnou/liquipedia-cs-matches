@@ -1,0 +1,10 @@
+{
+    "name": "Liquipedia Counter-Strike Matches",
+    "render_readme": true,
+    "domain": "liquipedia_cs",
+    "documentation": "https://github.com/Lavagnou/liquipedia-cs-matches",
+    "issue_tracker": "https://github.com/Lavagnou/liquipedia-cs-matches/issues",
+    "dependencies": [],
+    "version": "1.0.0",
+    "homeassistant": "2023.2"
+}

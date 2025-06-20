@@ -1,0 +1,13 @@
+# Exemple de configuration pour Liquipedia CS
+# À ajouter à votre fichier configuration.yaml
+
+liquipedia_cs:
+  teams:
+    - name: "Vitality"
+      page: "Team_Vitality"
+    - name: "NAVI"
+      page: "NAVI"
+    - name: "G2"
+      page: "G2_Esports"
+    - name: "ENCE"
+      page: "ENCE"
